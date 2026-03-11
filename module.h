@@ -72,33 +72,33 @@ extern "C"
 
   /**
    * "Tick" (update) a module.
-   * The module is expected to poll the queue for events and respond:
-   * either by posting events for next frame or something else.
+   * The module is expected to poll the queue for msgs and respond:
+   * either by posting msgs for next frame or something else.
    * By default, it is called u_MODULE_DEFAULT_TICKS_PER_SECOND times a second.
    * However, individual modules may specify their own tick rates at runtime.
    */
   typedef void (*umod_tick_fn)(umod* mod);
 
-  typedef struct umod_event
+  typedef struct umod_msg
   {
     // Values for both of these are found in the module struct
     // DO NOT ADDRESS RANDOM MODULES!!!!
-    // For an event to be passed to a module (and consumed),
-    // The event.sender_mask & module.receiver_mask must not euual 0
-    // I.E. The sender_mask specifies which groups (bits) can send events to a module
+    // For an msg to be passed to a module (and consumed),
+    // The msg.sender_mask & module.receiver_mask must not euual 0
+    // I.E. The sender_mask specifies which groups (bits) can send msgs to a module
     // And the receiver mask specifies which groups (bits) it can receive from.
     u32 sender_mask;
-    int event_id; // No inherent meaning. Interpreted by the receiving module.
+    int msg_id; // No inherent meaning. Interpreted by the receiving module.
 
     u8 data[u_MODULE_EVENT_DATA_SIZE];
-  } umod_event;
+  } umod_msg;
 
   typedef struct umod_desc // Module description
   {
     char name[u_MODULE_NAME_MAX_LENGTH];
 
-    u32 send_mask;    // Mask for when this module is sending events
-    u32 receive_mask; // Mask for when this module is receiving events
+    u32 send_mask;    // Mask for when this module is sending msgs
+    u32 receive_mask; // Mask for when this module is receiving msgs
 
     /* If any function pointer is NULL, it will not be called. */
     umod_init_fn init;
@@ -139,23 +139,30 @@ extern "C"
   int umodsys_tick(umodsys* sys);
 
   /**
-   * Post an event to the queue, which will be read by the module on next tick.
+   * Post an msg to the queue, which will be read by the module on next tick.
    * Thus, all modules here follow this pattern: Post first frame, Poll next frame.
    * Though it does mean all input reactions (module responses) are one frame late.
    */
-  void umod_send(umodsys* sys, const umod_event* ev);
+  void umod_send(umodsys* sys, const umod_msg* ev);
 
   /**
-   * Poll the event queue and check for all events addressed to this module.
-   * Returns the number of events addressed.
+   * Poll the msg queue and check for all msgs addressed to this module.
+   * Returns the number of msgs addressed.
    * handler is allowed to be NULL.
    */
-  int umod_recv(umodsys* sys, const char* module_name, void (*handler)(umod* mod, const umod_event* ev));
+  int umod_recv(umodsys* sys, const char* module_name, void (*handler)(umod* mod, const umod_msg* ev));
 
   /**
-   * Flush (clear) the event queue.
+   * Poll the msg queue for all messages that AND with the receive_mask.
+   * Returns the number of msgs addressed.
+   * handler is allowed to be NULL.
+   */
+  int umodsys_recv(umodsys* sys, u32 receive_mask, void (*handler)(const umod_msg* ev));
+
+  /**
+   * Flush (clear) the msg queue.
    * Call at the end of each game loop iteration.
-   * Returns number of events dropped from the queue.
+   * Returns number of msgs dropped from the queue.
    */
   int umodsys_clear_queue(umodsys* sys);
 
@@ -209,9 +216,9 @@ extern "C"
     FILE* logfile;
 
     // We don't accidentally want to allocate 10KB on the stack. Do we..?
-    umod_event* events; // size=u_MODULE_EVENT_RING_BUFFER_SIZE
+    umod_msg* msgs; // size=u_MODULE_EVENT_RING_BUFFER_SIZE
 
-    int head, tail; // event queue head=read tail=write
+    int head, tail; // msg queue head=read tail=write
   };
 
   // FNV1-A 32 bit hash for strings

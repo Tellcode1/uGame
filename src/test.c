@@ -1,19 +1,60 @@
-#include "../time.h"
+#include "../winmodule.h"
 
+#include <SDL3/SDL_events.h>
+#include <SDL3/SDL_scancode.h>
+#include <SDL3/SDL_video.h>
 #include <stdbool.h>
 #include <stdio.h>
+
+static bool run = true;
+
+static inline void
+process_events(const umod_msg* msg)
+{
+  const uwin_msg_payload* pload = (uwin_msg_payload*)msg->data;
+  switch ((uwin_msg_type)msg->msg_id)
+  {
+    case U_WIN_MSG_EXIT: run = false; break;
+    case U_WIN_MSG_INIT: run = true; break;
+    case U_WIN_MSG_KEY_DOWN:
+      printf("Key %u down\n", pload->key.scancode);
+      if (pload->key.scancode == SDL_SCANCODE_ESCAPE) run = false;
+      break;
+    case U_WIN_MSG_KEY_UP: printf("Key %u up\n", pload->key.scancode); break;
+    case U_WIN_MSG_MOUSE_MOVE: printf("Mouse moved: %f %f\n", pload->mouse_move.x, pload->mouse_move.y); break;
+    case U_WIN_MSG_MOUSE_CLICK: printf("Mouse button %u clicked %f %f\n", pload->mouse_bton.button, pload->mouse_bton.x, pload->mouse_bton.y); break;
+    case U_WIN_MSG_MOUSE_DOUBLE_CLICK: printf("Mouse button %u double clicked %f %f\n", pload->mouse_bton.button, pload->mouse_bton.x, pload->mouse_bton.y); break;
+  }
+}
 
 int
 main(void)
 {
-  utimer tmr = utimer_init();
-  while (true)
+  umodsys sys;
+  if (umodsys_init(&sys)) return -1;
+
+  uwin_init_info winit_info = {
+    .width  = 800,
+    .height = 600,
+    .title  = "Poot dispenser here!!!",
+    .flags  = SDL_WINDOW_INPUT_FOCUS | SDL_WINDOW_OPENGL,
+  };
+
+  umod_desc desc = uwin_module_info();
+  if (umod_init(&desc, &winit_info, &sys)) return -1;
+
+  while (run)
   {
+    umodsys_tick(&sys);
+    umodsys_recv(&sys, U_WIN_MESSAGE_MASK, process_events);
+    umodsys_clear_queue(&sys);
+
     // utime tm;
     // utime_get_time(&tm);
-    printf("%.3f\n", (double)utimer_elapsed_nsecs(tmr) / 1e9);
 
     // printf("%i/%i/%i %i:%i:%i %.3f\n", tm.day, tm.month, tm.year, tm.hour, tm.min, tm.sec, (double)utime_hwclock_nsecs() / 1e9);
   }
+
+  umod_free(&sys, "UWindow");
   return 0;
 }

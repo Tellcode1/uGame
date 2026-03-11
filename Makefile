@@ -1,8 +1,11 @@
 CC=gcc
 CFLAGS=-g
-LDFLAGS=-lm -g
+LDFLAGS=-lm -lSDL3
 
-test: build/test.o build/msys.o build/mevents.o build/time.o build/libnvstd.a
+SRC=src/test.c src/msys.c src/mmsg.c src/time.c src/ufr.c src/winm.c
+OBJ=$(patsubst src/%.c,build/%.o,$(SRC))
+
+test: $(OBJ) build/libnvstd.a
 	$(CC) $(LDFLAGS) $^ -o $@
 
 build:

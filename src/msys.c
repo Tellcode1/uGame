@@ -17,7 +17,7 @@ umodsys_init(umodsys* sys)
   sys->cmodules = mod_cap;
   sys->nmodules = 0;
   sys->modules  = malloc(sizeof(umod) * mod_cap);
-  sys->events   = malloc(sizeof(umod_event) * u_MODULE_EVENT_RING_BUFFER_SIZE);
+  sys->msgs     = malloc(sizeof(umod_msg) * u_MODULE_EVENT_RING_BUFFER_SIZE);
   sys->logfile  = stderr;
 
   return 0;
@@ -26,7 +26,7 @@ umodsys_init(umodsys* sys)
 void
 umodsys_free(umodsys* sys)
 {
-  free(sys->events);
+  free(sys->msgs);
   free(sys->modules);
 }
 
