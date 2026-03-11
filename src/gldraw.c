@@ -1,0 +1,110 @@
+#include "../../std/include/file.h"
+#include "../cmdbuf.h"
+#include "../fralloc.h"
+#include "../glad.h"
+#include "../glmodule.h"
+
+#include <SDL3/SDL.h>
+#include <SDL3/SDL_opengl.h>
+#include <stdlib.h>
+
+void
+ugl_cmd_push(ugl_module* mod, const ugl_command* cmd)
+{
+  if (!mod->cmds)
+  {
+    mod->cmds  = ufr_alloc(sizeof(ugl_command) * UGL_MAX_COMMANDS);
+    mod->ncmds = 0;
+  }
+
+  mod->cmds[mod->ncmds++] = *cmd;
+}
+
+void
+ugl_cmd_flush(ugl_module* mod)
+{
+  /* Clear command buffers. We'll allocate them next frame on the FR */
+  mod->ncmds = 0;
+  mod->cmds  = NULL;
+}
+
+void
+ugl_draw(ugl_module* ugl)
+{
+  glClear(GL_COLOR_BUFFER_BIT);
+
+  glUseProgram(ugl->shader);
+  glBindVertexArray(ugl->vao);
+  glBindBuffer(GL_ARRAY_BUFFER, ugl->vbo);
+
+  int w, h;
+  SDL_GetWindowSize(ugl->window, &w, &h);
+  glUniform2f(ugl->u_resolution_loc, (float)w, (float)h);
+
+  for (u32 i = 0; i < ugl->ncmds; i++)
+  {
+    ugl_command* cmd = &ugl->cmds[i];
+    if (cmd->type == UGL_COMMAND_DRAW_RECT)
+    {
+      glUniform2f(ugl->u_pos_loc, cmd->value.rect.rect.x, cmd->value.rect.rect.y);
+      glUniform2f(ugl->u_size_loc, cmd->value.rect.rect.w, cmd->value.rect.rect.h);
+      glUniform4f(ugl->u_color_loc, cmd->value.rect.color.r, cmd->value.rect.color.g, cmd->value.rect.color.b, cmd->value.rect.color.a);
+      glDrawArrays(GL_TRIANGLES, 0, 6);
+    }
+  }
+
+  glBindVertexArray(0); // unbind when done
+  SDL_GL_SwapWindow(ugl->window);
+}
+
+int
+ugl_init_draw_sys(ugl_module* ugl)
+{
+  ugl->ncmds = 0;
+  ugl->cmds  = NULL;
+
+  // clang-format off
+  float quad[] = {
+  -0.5F, -0.5F,
+   0.5F, -0.5F,
+   0.5F,  0.5F,
+
+  -0.5F, -0.5F,
+   0.5F,  0.5F,
+  -0.5F,  0.5F,
+};
+  // clang-format on
+
+  glGenVertexArrays(1, &ugl->vao);
+  glGenBuffers(1, &ugl->vbo);
+  glBindVertexArray(ugl->vao);
+  glBindBuffer(GL_ARRAY_BUFFER, ugl->vbo);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(quad), quad, GL_STATIC_DRAW);
+  glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, 0);
+  glEnableVertexAttribArray(0);
+
+  char* vertex_source   = NULL;
+  char* fragment_source = NULL;
+  nvfs_file_read_all("src/shaders/vert.glsl", &vertex_source, NULL);
+  nvfs_file_read_all("src/shaders/frag.glsl", &fragment_source, NULL);
+
+  ugl->shader = ugl_load_shader(vertex_source, fragment_source);
+
+  ugl->u_pos_loc        = glGetUniformLocation(ugl->shader, "u_pos");
+  ugl->u_size_loc       = glGetUniformLocation(ugl->shader, "u_size");
+  ugl->u_color_loc      = glGetUniformLocation(ugl->shader, "u_color");
+  ugl->u_resolution_loc = glGetUniformLocation(ugl->shader, "u_resolution");
+
+  free(vertex_source);
+  free(fragment_source);
+
+  return 0;
+}
+
+void
+ugl_free_draw_sys(ugl_module* ugl)
+{
+  glDeleteVertexArrays(1, &ugl->vao);
+  glDeleteBuffers(1, &ugl->vbo);
+  glDeleteShader(ugl->shader);
+}

@@ -40,17 +40,15 @@ ugl_init(umod* mod, void* init_info)
   ugl->window = win;
 
   if (!gladLoadGLLoader((GLADloadproc)SDL_GL_GetProcAddress)) return -1;
-  // if (gladLoadGL()) { return -1; }
 
-  // SDL_GL_LoadLibrary(NULL);
-
-  return 0;
+  return ugl_init_draw_sys(ugl);
 }
 
 void
 ugl_exit(umod* mod)
 {
   ugl_module* ugl = mod->module_data;
+  ugl_free_draw_sys(ugl);
   SDL_GL_DestroyContext(ugl->context);
   free(ugl);
 }
@@ -58,8 +56,4 @@ ugl_exit(umod* mod)
 void
 ugl_tick(umod* mod)
 {
-  ugl_module* ugl = mod->module_data;
-
-  glClear(GL_COLOR_BUFFER_BIT);
-  SDL_GL_SwapWindow(ugl->window);
 }

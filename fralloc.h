@@ -21,7 +21,7 @@ typedef struct uframe_arena
 extern uframe_arena ufr;
 
 static inline void*
-ufr_alloc(int size) // Allocate from frame arena. Pointer invalidated on frame end.
+ufr_alloc(size_t size) // Allocate from frame arena. Pointer invalidated on frame end.
 {
   if (ufr.offset + size > U_FRAME_ARENA_SIZE) return NULL;
   void* buf = ufr.buffer + ufr.offset;
@@ -32,8 +32,9 @@ ufr_alloc(int size) // Allocate from frame arena. Pointer invalidated on frame e
 
 // NOOP
 static inline void
-ufr_free()
+ufr_free(void* p)
 {
+  (void)p;
 }
 
 static inline void
