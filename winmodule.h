@@ -3,6 +3,7 @@
 
 /**
  * In uGame, the window is responsible for both the windowing and input msgs.
+ * winmodule->module_data = SDL_Window *
  */
 
 #include "module.h"
@@ -28,31 +29,26 @@ typedef enum uwin_msg_type
   U_WIN_MSG_MOUSE_DOUBLE_CLICK, // Mouse double clicked. Both the CLICK and DOUBLE_CLICK events are posted.
 } uwin_msg_type;
 
-typedef struct
+typedef struct uwin_msg_key
 {
   u32 scancode;
-} uev_key;
-typedef struct
+} uwin_msg_key;
+typedef struct uwin_msg_mouse_move
 {
   float x, y;
-} uev_mouse_move;
-typedef struct
+} uwin_msg_mouse_move;
+typedef struct uwin_msg_mouse_btn
 {
+  float x, y;
   u32   button;
-  float x, y;
-} uev_mouse_btn;
+} uwin_msg_mouse_btn;
 
 typedef union uwin_msg_payload
 {
-  uev_key        key;
-  uev_mouse_move mouse_move;
-  uev_mouse_btn  mouse_bton;
+  uwin_msg_key        key;
+  uwin_msg_mouse_move mouse_move;
+  uwin_msg_mouse_btn  mouse_bton;
 } uwin_msg_payload;
-
-typedef struct uwin_module
-{
-  SDL_Window* win;
-} uwin_module;
 
 typedef struct uwin_init_info
 {
@@ -74,7 +70,7 @@ static inline umod_desc
 uwin_module_info(void)
 {
   return (umod_desc){
-    .name         = "UWindow",
+    .name         = "uWindow",
     .send_mask    = U_WIN_MESSAGE_MASK,
     .receive_mask = 0,
     .init         = uwin_init,

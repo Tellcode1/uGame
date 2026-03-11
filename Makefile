@@ -1,8 +1,8 @@
 CC=gcc
 CFLAGS=-g
-LDFLAGS=-lm -lSDL3
+LDFLAGS=-g -lm -lSDL3
 
-SRC=src/test.c src/msys.c src/mmsg.c src/time.c src/ufr.c src/winm.c
+SRC=src/test.c src/msys.c src/mmsg.c src/time.c src/ufr.c src/winm.c src/glinitm.c src/glad.c
 OBJ=$(patsubst src/%.c,build/%.o,$(SRC))
 
 test: $(OBJ) build/libnvstd.a

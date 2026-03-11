@@ -1,3 +1,4 @@
+#include "../glmodule.h"
 #include "../winmodule.h"
 
 #include <SDL3/SDL_events.h>
@@ -37,24 +38,30 @@ main(void)
     .width  = 800,
     .height = 600,
     .title  = "Poot dispenser here!!!",
-    .flags  = SDL_WINDOW_INPUT_FOCUS | SDL_WINDOW_OPENGL,
+    .flags  = SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE,
   };
 
   umod_desc desc = uwin_module_info();
   if (umod_init(&desc, &winit_info, &sys)) return -1;
+
+  ugl_init_info glinit_info = {
+    .major_version    = 4,
+    .minor_version    = 5,
+    .profile          = SDL_GL_CONTEXT_PROFILE_CORE,
+    .double_buffering = 1,
+  };
+
+  desc = ugl_module_desc();
+  if (umod_init(&desc, &glinit_info, &sys)) return -1;
 
   while (run)
   {
     umodsys_tick(&sys);
     umodsys_recv(&sys, U_WIN_MESSAGE_MASK, process_events);
     umodsys_clear_queue(&sys);
-
-    // utime tm;
-    // utime_get_time(&tm);
-
-    // printf("%i/%i/%i %i:%i:%i %.3f\n", tm.day, tm.month, tm.year, tm.hour, tm.min, tm.sec, (double)utime_hwclock_nsecs() / 1e9);
   }
 
-  umod_free(&sys, "UWindow");
+  umod_free(&sys, "uWindow");
+  umod_free(&sys, "uGL");
   return 0;
 }
