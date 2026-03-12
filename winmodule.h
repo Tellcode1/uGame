@@ -20,13 +20,14 @@
 
 typedef enum uwin_msg_type
 {
-  U_WIN_MSG_EXIT,               // Called to signal user to free window module and exit (User is trying to exit window)
-  U_WIN_MSG_INIT,               // Called when window module is initialized.
+  U_WIN_MSG_EXIT,               // Called to signal user to free window module and free (User is trying to free window)
   U_WIN_MSG_KEY_DOWN,           // Key pressed / repeat.
   U_WIN_MSG_KEY_UP,             // Key unpressed.
   U_WIN_MSG_MOUSE_MOVE,         // Mouse moved.
   U_WIN_MSG_MOUSE_CLICK,        // Mouse clicked.
   U_WIN_MSG_MOUSE_DOUBLE_CLICK, // Mouse double clicked. Both the CLICK and DOUBLE_CLICK events are posted.
+  U_WIN_MSG_MOUSE_SCROLL,       // Scroll wheel used.
+  U_WIN_MSG_WIN_RESIZE,         // Window resized
 } uwin_msg_type;
 
 typedef struct uwin_msg_key
@@ -43,11 +44,25 @@ typedef struct uwin_msg_mouse_btn
   u32   button;
 } uwin_msg_mouse_btn;
 
+typedef struct uwin_msg_wind_resized
+{
+  u32 width;
+  u32 height;
+} uwin_msg_wind_resized;
+
+typedef struct uwin_msg_scroll
+{
+  float x; // + right, - left
+  float y; // + up, - down
+} uwin_msg_scroll;
+
 typedef union uwin_msg_payload
 {
-  uwin_msg_key        key;
-  uwin_msg_mouse_move mouse_move;
-  uwin_msg_mouse_btn  mouse_bton;
+  uwin_msg_key          key;
+  uwin_msg_mouse_move   mouse_move;
+  uwin_msg_mouse_btn    mouse_bton;
+  uwin_msg_wind_resized win_resized;
+  uwin_msg_scroll       scroll;
 } uwin_msg_payload;
 
 typedef struct uwin_init_info
@@ -74,7 +89,7 @@ uwin_module_info(void)
     .send_mask    = U_WIN_MESSAGE_MASK,
     .receive_mask = 0,
     .init         = uwin_init,
-    .exit         = uwin_free,
+    .free         = uwin_free,
     .tick         = uwin_tick,
   };
 }

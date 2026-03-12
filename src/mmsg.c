@@ -40,7 +40,7 @@ umod_recv(umodsys* sys, const char* module_name, void (*handler)(umod* mod, cons
 }
 
 int
-umodsys_recv(umodsys* sys, u32 receive_mask, void (*handler)(const umod_msg* ev))
+umodsys_recv(umodsys* sys, u32 receive_mask, void (*handler)(const umod_msg* ev, void* user_data), void* handler_user_data)
 {
   int processed = 0;
   int i         = sys->head;
@@ -50,7 +50,7 @@ umodsys_recv(umodsys* sys, u32 receive_mask, void (*handler)(const umod_msg* ev)
     umod_msg* e = &sys->msgs[i];
     if (e->sender_mask & receive_mask)
     {
-      if (handler) handler(e);
+      if (handler) handler(e, handler_user_data);
       processed++;
     }
     i = (i + 1) % u_MODULE_EVENT_RING_BUFFER_SIZE;

@@ -78,5 +78,19 @@ uwin_tick(umod* mod)
       data->mouse_bton.button = ev.button.button;
       umod_send(mod->sys, &msg);
     }
+    else if (ev.type == SDL_EVENT_WINDOW_RESIZED)
+    {
+      msg.msg_id               = U_WIN_MSG_WIN_RESIZE;
+      data->win_resized.width  = ev.window.data1;
+      data->win_resized.height = ev.window.data2;
+      umod_send(mod->sys, &msg);
+    }
+    else if (ev.type == SDL_EVENT_MOUSE_WHEEL)
+    {
+      msg.msg_id     = U_WIN_MSG_MOUSE_SCROLL;
+      data->scroll.x = ev.wheel.x;
+      data->scroll.y = ev.wheel.y;
+      umod_send(mod->sys, &msg);
+    }
   }
 }

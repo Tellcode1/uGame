@@ -11,6 +11,7 @@
 #define UGL_MAX_COMMANDS 4096
 
 struct ugl_command;
+struct ucamera;
 
 typedef struct ugl_module
 {
@@ -28,6 +29,9 @@ typedef struct ugl_module
   i32 u_size_loc;
   i32 u_color_loc;
   i32 u_resolution_loc;
+  i32 u_vp_loc;
+
+  struct ucamera* main_cam;
 } ugl_module;
 
 typedef struct ugl_init_info
@@ -39,8 +43,16 @@ typedef struct ugl_init_info
 } ugl_init_info;
 
 int  ugl_init(umod* mod, void* init_info);
-void ugl_exit(umod* mod);
+void ugl_free(umod* mod);
 void ugl_tick(umod* mod);
+
+static inline struct ucamera*
+ugl_set_active_camera(ugl_module* ugl, struct ucamera* cam)
+{
+  struct ucamera* last = ugl->main_cam;
+  ugl->main_cam        = cam;
+  return last;
+}
 
 /**
  * Returns shader ID.
@@ -66,7 +78,7 @@ ugl_module_desc(void)
     .send_mask    = U_GL_MESSAGE_MASK,
     .receive_mask = 0,
     .init         = ugl_init,
-    .exit         = ugl_exit,
+    .free         = ugl_free,
     .tick         = ugl_tick,
   };
 }

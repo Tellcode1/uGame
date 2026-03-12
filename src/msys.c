@@ -66,9 +66,13 @@ umod_init(const umod_desc* desc, void* init_function_arg, umodsys* sys)
     sys->modules  = newmodules;
   }
 
-  umod* modp = &sys->modules[sys->nmodules++];
+  int id = sys->nmodules++;
+
+  umod* modp = &sys->modules[id];
   memset(modp, 0, sizeof(umod));
-  memcpy(&modp->desc, desc, sizeof(*desc));
+
+  // Copy description, name is char buffer so this is safe.
+  modp->desc = *desc;
 
   modp->sys           = sys;
   modp->ticks_per_sec = u_MODULE_DEFAULT_TICKS_PER_SECOND;
@@ -85,14 +89,14 @@ umod_init(const umod_desc* desc, void* init_function_arg, umodsys* sys)
   int e = 0;
   if (desc->init) e = desc->init(modp, init_function_arg);
 
-  return e;
+  return e ? -1 : id;
 }
 
 void
 umod_free(umodsys* sys, const char* name)
 {
   umod* modp = umodsys_find_module_by_name(sys, name);
-  if (modp && modp->desc.exit) modp->desc.exit(modp);
+  if (modp && modp->desc.free) modp->desc.free(modp);
 }
 
 size_t
@@ -127,6 +131,29 @@ umodsys_tick_all(umodsys* sys)
   return nticked;
 }
 
+static inline int
+mod_tick(u64 now, umod* mod)
+{
+  int nticked = 0;
+
+  u64 interval_ns = 1000000000ULL / mod->ticks_per_sec;
+
+  mod->dt_ns_accum += now - mod->last_tick_ns;
+  mod->last_tick_ns = now;
+
+  while (mod->dt_ns_accum >= interval_ns)
+  {
+    if (mod->desc.tick)
+    {
+      mod->desc.tick(mod);
+      nticked++;
+    }
+    mod->dt_ns_accum -= interval_ns;
+  }
+
+  return nticked;
+}
+
 int
 umodsys_tick(umodsys* sys)
 {
@@ -135,21 +162,8 @@ umodsys_tick(umodsys* sys)
 
   for (int i = 0; i < sys->nmodules; i++)
   {
-    umod* mod         = &sys->modules[i];
-    u64   interval_ns = 1000000000ULL / mod->ticks_per_sec;
-
-    mod->dt_ns_accum += now - mod->last_tick_ns;
-    mod->last_tick_ns = now;
-
-    while (mod->dt_ns_accum >= interval_ns)
-    {
-      if (mod->desc.tick)
-      {
-        mod->desc.tick(mod);
-        nticked++;
-      }
-      mod->dt_ns_accum -= interval_ns;
-    }
+    umod* mod = &sys->modules[i];
+    nticked += mod_tick(now, mod);
   }
 
   return nticked;
@@ -164,4 +178,16 @@ umodsys_clear_queue(umodsys* sys)
   sys->head = sys->tail;
 
   return ndropped;
+}
+
+int
+umod_set_tick_rate(umodsys* sys, const char* module_name, int ticks_per_sec)
+{
+  umod* mod = umodsys_find_module_by_name(sys, module_name);
+
+  int nticked = mod_tick(getns(), mod);
+
+  if (mod) mod->ticks_per_sec = ticks_per_sec;
+
+  return nticked;
 }

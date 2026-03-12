@@ -1,5 +1,5 @@
-#include "../glad.h"
-#include "../glmodule.h"
+#include "../../glad.h"
+#include "../../glmodule.h"
 
 #include <SDL3/SDL_video.h>
 #include <stddef.h>
@@ -15,12 +15,12 @@ ugl_init(umod* mod, void* init_info)
   SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, ini->profile);
 
   SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, ini->double_buffering);
-  SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
-  SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
-  SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8);
-  SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8);
-  SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8);
-  SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 8);
+  // SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
+  // SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
+  // SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8);
+  // SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8);
+  // SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8);
+  // SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 8);
 
   mod->module_data = malloc(sizeof(ugl_module));
   if (!mod->module_data) return -1;
@@ -45,7 +45,7 @@ ugl_init(umod* mod, void* init_info)
 }
 
 void
-ugl_exit(umod* mod)
+ugl_free(umod* mod)
 {
   ugl_module* ugl = mod->module_data;
   ugl_free_draw_sys(ugl);
@@ -56,4 +56,5 @@ ugl_exit(umod* mod)
 void
 ugl_tick(umod* mod)
 {
+  /* We only handle draw calls and stuff. We *currently* don't need any per frame logic. */
 }

@@ -1,5 +1,5 @@
-#include "../glad.h"
-#include "../glmodule.h"
+#include "../../glad.h"
+#include "../../glmodule.h"
 
 static void
 debug_log_shaderinfo(u32 shader)

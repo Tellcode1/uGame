@@ -1,11 +1,13 @@
-#include "../../std/include/file.h"
-#include "../cmdbuf.h"
-#include "../fralloc.h"
-#include "../glad.h"
-#include "../glmodule.h"
+#include "../../../std/include/file.h"
+#include "../../camera.h"
+#include "../../cmdbuf.h"
+#include "../../fralloc.h"
+#include "../../glad.h"
+#include "../../glmodule.h"
 
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_opengl.h>
+#include <stdio.h>
 #include <stdlib.h>
 
 void
@@ -40,6 +42,10 @@ ugl_draw(ugl_module* ugl)
   int w, h;
   SDL_GetWindowSize(ugl->window, &w, &h);
   glUniform2f(ugl->u_resolution_loc, (float)w, (float)h);
+
+  glUniformMatrix4fv(ugl->u_vp_loc, 1, false, ugl->main_cam->vp_matrix[0]);
+
+  glViewport(0, 0, w, h); //
 
   for (u32 i = 0; i < ugl->ncmds; i++)
   {
@@ -94,6 +100,7 @@ ugl_init_draw_sys(ugl_module* ugl)
   ugl->u_size_loc       = glGetUniformLocation(ugl->shader, "u_size");
   ugl->u_color_loc      = glGetUniformLocation(ugl->shader, "u_color");
   ugl->u_resolution_loc = glGetUniformLocation(ugl->shader, "u_resolution");
+  ugl->u_vp_loc         = glGetUniformLocation(ugl->shader, "u_vp");
 
   free(vertex_source);
   free(fragment_source);

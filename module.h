@@ -68,7 +68,7 @@ extern "C"
   /**
    * Free module resources.
    */
-  typedef void (*umod_exit_fn)(umod* mod);
+  typedef void (*umod_free_fn)(umod* mod);
 
   /**
    * "Tick" (update) a module.
@@ -102,9 +102,41 @@ extern "C"
 
     /* If any function pointer is NULL, it will not be called. */
     umod_init_fn init;
-    umod_exit_fn exit;
+    umod_free_fn free;
     umod_tick_fn tick;
   } umod_desc;
+
+  struct umod
+  {
+    umodsys* sys;
+    void*    module_data;
+
+    umod_desc desc;
+    u32       name_hash;
+
+    int ticks_per_sec;
+
+    // Nanosecond delta time accumulator for ticks, handled by msys
+    u64 dt_ns_accum;
+
+    // Nanoseconds when the module was ticked last.
+    u64 last_tick_ns;
+  };
+
+  struct umodsys
+  {
+    struct umod* modules;
+    int          nmodules;
+    int          cmodules; // capacity
+
+    /* stderr by default. */
+    FILE* logfile;
+
+    // We don't accidentally want to allocate 10KB on the stack. Do we..?
+    umod_msg* msgs; // size=u_MODULE_EVENT_RING_BUFFER_SIZE
+
+    int head, tail; // msg queue head=read tail=write
+  };
 
   /**
    * Log an entry to the logfile of the module system.
@@ -157,7 +189,7 @@ extern "C"
    * Returns the number of msgs addressed.
    * handler is allowed to be NULL.
    */
-  int umodsys_recv(umodsys* sys, u32 receive_mask, void (*handler)(const umod_msg* ev));
+  int umodsys_recv(umodsys* sys, u32 receive_mask, void (*handler)(const umod_msg* ev, void* user_data), void* handler_user_data);
 
   /**
    * Flush (clear) the msg queue.
@@ -169,57 +201,31 @@ extern "C"
   /**
    * Find the first module with the name.
    */
-  umod* umodsys_find_module(const umodsys* sys, int id);
+  static inline umod*
+  umodsys_get_module(umodsys* sys, int id)
+  {
+    return &(sys)->modules[(id)];
+  }
   umod* umodsys_find_module_by_name(const umodsys* sys, const char* name);
 
   /**
    * Initialize a module using its description.
-   * On success, returns 0.
+   * On success, returns the module ID.
+   * On error, returns -1.
    */
   int umod_init(const umod_desc* desc, void* init_function_arg, umodsys* sys);
 
   /**
    * Free module from the system.
-   * Internally calls the module's exit function.
+   * Internally calls the module's free function.
    */
   void umod_free(umodsys* sys, const char* module_name);
 
   /**
    * Takes effect instantaneously, flushing every tick needed.
+   * Returns the number of ticks processed before changing the ticks_per_sec.
    */
   int umod_set_tick_rate(umodsys* sys, const char* module_name, int ticks_per_sec);
-
-  struct umod
-  {
-    umodsys* sys;
-    void*    module_data;
-
-    umod_desc desc;
-    u32       name_hash;
-
-    int ticks_per_sec;
-
-    // Nanosecond delta time accumulator for ticks, handled by msys
-    u64 dt_ns_accum;
-
-    // Nanoseconds when the module was ticked last.
-    u64 last_tick_ns;
-  };
-
-  struct umodsys
-  {
-    struct umod* modules;
-    int          nmodules;
-    int          cmodules; // capacity
-
-    /* stderr by default. */
-    FILE* logfile;
-
-    // We don't accidentally want to allocate 10KB on the stack. Do we..?
-    umod_msg* msgs; // size=u_MODULE_EVENT_RING_BUFFER_SIZE
-
-    int head, tail; // msg queue head=read tail=write
-  };
 
   // FNV1-A 32 bit hash for strings
   // We could use an unrolled loop for 64 byte strings (for names, fixed length)
