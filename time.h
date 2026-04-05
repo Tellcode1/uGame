@@ -6,7 +6,7 @@ extern "C"
 {
 #endif
 
-#include "../std/include/types.h"
+#include "types.h"
 
 #define UTIME_NSECS_TO_SECS(nsec) ((nsec) * 1e-9)
 #define UTIME_NSECS_TO_MSECS(nsec) ((nsec) * 1e-6)

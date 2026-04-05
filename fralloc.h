@@ -1,7 +1,7 @@
 #ifndef U_FRAME_ALLOC_H
 #define U_FRAME_ALLOC_H
 
-#include "../std/include/types.h"
+#include "types.h"
 
 #include <stddef.h>
 
@@ -33,14 +33,10 @@ ufr_alloc(size_t size) // Allocate from frame arena. Pointer invalidated on fram
 // NOOP
 static inline void
 ufr_free(void* p)
-{
-  (void)p;
-}
+{ (void)p; }
 
 static inline void
 ufr_clear()
-{
-  ufr.offset = 0;
-}
+{ ufr.offset = 0; }
 
 #endif // U_FRAME_ALLOC_H

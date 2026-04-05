@@ -1,8 +1,8 @@
 #ifndef U_VK_MODULE_H
 #define U_VK_MODULE_H
 
-#include "../std/include/types.h"
 #include "module.h"
+#include "types.h"
 
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_opengl.h>
@@ -29,7 +29,7 @@ typedef struct ugl_module
   i32 u_size_loc;
   i32 u_color_loc;
   i32 u_resolution_loc;
-  i32 u_vp_loc;
+  i32 u_mvp_loc;
 
   struct ucamera* main_cam;
 } ugl_module;

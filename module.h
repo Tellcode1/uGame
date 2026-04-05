@@ -41,7 +41,7 @@ SOFTWARE.
 #  define u_MODULE_EVENT_DATA_SIZE 64
 #endif
 
-#include "../std/include/types.h"
+#include "types.h"
 
 #include <stddef.h>
 #include <stdio.h>
@@ -203,9 +203,7 @@ extern "C"
    */
   static inline umod*
   umodsys_get_module(umodsys* sys, int id)
-  {
-    return &(sys)->modules[(id)];
-  }
+  { return &(sys)->modules[(id)]; }
   umod* umodsys_find_module_by_name(const umodsys* sys, const char* name);
 
   /**

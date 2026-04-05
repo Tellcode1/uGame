@@ -1,7 +1,7 @@
 #ifndef U_COMMAND_BUFFER_H
 #define U_COMMAND_BUFFER_H
 
-#include "../std/include/types.h"
+#include "types.h"
 
 typedef enum ugl_command_type
 {

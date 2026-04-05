@@ -91,9 +91,9 @@ main(void)
 
     const float PI = 3.1415926535F;
 
-    float r = .8F + sinf(0.5F * (float)utime_hwclock_nsecs() * 1e-8F);
-    float g = .8F + cosf(0.5F * (float)utime_hwclock_nsecs() * 1e-8F);
-    float b = .8F + tanf(0.5F * (float)utime_hwclock_nsecs() * 1e-8F);
+    float r = 2.F + sinf(0.3F * (float)utime_hwclock_nsecs() * 1e-8F);
+    float g = 2.F + cosf(0.3F * (float)utime_hwclock_nsecs() * 1e-8F);
+    float b = 2.F + tanf(0.3F * (float)utime_hwclock_nsecs() * 1e-8F);
     ugl_command cmd = {
       .type       = UGL_COMMAND_DRAW_RECT,
       .value.rect = { .rect = { .x = 0.0F, .y = 0.0F, .w = r, .h = g }, .color = { .r = r, .g = g, b, 1.0F }, .layer = 0, },

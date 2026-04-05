@@ -1,12 +1,16 @@
-#include "../../../std/include/file.h"
 #include "../../camera.h"
 #include "../../cmdbuf.h"
 #include "../../fralloc.h"
 #include "../../glad.h"
 #include "../../glmodule.h"
+#include "../../time.h"
 
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_opengl.h>
+#include <cglm/affine-pre.h>
+#include <cglm/affine.h>
+#include <cglm/mat4.h>
+#include <cglm/quat.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -43,7 +47,16 @@ ugl_draw(ugl_module* ugl)
   SDL_GetWindowSize(ugl->window, &w, &h);
   glUniform2f(ugl->u_resolution_loc, (float)w, (float)h);
 
-  glUniformMatrix4fv(ugl->u_vp_loc, 1, false, ugl->main_cam->vp_matrix[0]);
+  mat4 model = GLM_MAT4_IDENTITY_INIT;
+
+  glm_translate(model, (vec3){ 0.F, 0.F, 0.F });
+  glm_rotate(model, (float)utime_hwclock_nsecs() * 1e-9F, (vec3){ 0.F, 0.F, 1.F });
+  glm_scale(model, (vec3){ 1.F, 1.F, 1.F });
+
+  mat4 mvp;
+  glm_mat4_mul(model, ugl->main_cam->vp_matrix, mvp);
+
+  glUniformMatrix4fv(ugl->u_mvp_loc, 1, false, mvp[0]);
 
   glViewport(0, 0, w, h); //
 
@@ -61,6 +74,28 @@ ugl_draw(ugl_module* ugl)
 
   glBindVertexArray(0); // unbind when done
   SDL_GL_SwapWindow(ugl->window);
+}
+
+static inline char*
+file_read(const char* path)
+{
+  FILE* f = fopen(path, "r");
+  if (!f) return NULL;
+
+  fseek(f, 0, SEEK_END);
+
+  long size = ftell(f);
+
+  fseek(f, 0, SEEK_SET);
+
+  char* s = malloc(size + 1);
+  s[size] = 0;
+
+  fread(s, size, 1, f);
+
+  fclose(f);
+
+  return s;
 }
 
 int
@@ -91,8 +126,8 @@ ugl_init_draw_sys(ugl_module* ugl)
 
   char* vertex_source   = NULL;
   char* fragment_source = NULL;
-  nvfs_file_read_all("src/shaders/vert.glsl", &vertex_source, NULL);
-  nvfs_file_read_all("src/shaders/frag.glsl", &fragment_source, NULL);
+  vertex_source         = file_read("src/shaders/vert.glsl");
+  fragment_source       = file_read("src/shaders/frag.glsl");
 
   ugl->shader = ugl_load_shader(vertex_source, fragment_source);
 
@@ -100,7 +135,7 @@ ugl_init_draw_sys(ugl_module* ugl)
   ugl->u_size_loc       = glGetUniformLocation(ugl->shader, "u_size");
   ugl->u_color_loc      = glGetUniformLocation(ugl->shader, "u_color");
   ugl->u_resolution_loc = glGetUniformLocation(ugl->shader, "u_resolution");
-  ugl->u_vp_loc         = glGetUniformLocation(ugl->shader, "u_vp");
+  ugl->u_mvp_loc        = glGetUniformLocation(ugl->shader, "u_mvp");
 
   free(vertex_source);
   free(fragment_source);
