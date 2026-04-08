@@ -50,7 +50,8 @@ ugl_draw(ugl_module* ugl)
   mat4 model = GLM_MAT4_IDENTITY_INIT;
 
   glm_translate(model, (vec3){ 0.F, 0.F, 0.F });
-  glm_rotate(model, (float)utime_hwclock_nsecs() * 1e-9F, (vec3){ 0.F, 0.F, 1.F });
+  // glm_rotate(model, (float)utime_hwclock_nsecs() * 1e-9F, (vec3){ 0.F, 0.F, 1.F });
+  glm_rotate(model, 0.0F, (vec3){ 0.0F, 0.0F, 0.0F });
   glm_scale(model, (vec3){ 1.F, 1.F, 1.F });
 
   mat4 mvp;

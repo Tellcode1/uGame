@@ -1,3 +1,7 @@
+#include "../ESL/exec.h"
+#include "../ESL/rwhelp.h"
+#include "../ESL/struct.h"
+#include "../ESL/var.h"
 #include "../camera.h"
 #include "../cmdbuf.h"
 #include "../fralloc.h"
@@ -40,9 +44,45 @@ process_events(const umod_msg* msg, void* user_data)
   }
 }
 
+static inline int
+load_script(const char* path, e_script* s)
+{
+  FILE* f = fopen(path, "rb");
+  if (!f)
+  {
+    puts(path);
+    perror("Failed to open file");
+    return -1;
+  }
+
+  void* root_allocation = nullptr;
+
+  e_compilation_result r = { 0 };
+  int                  e = e_file_load(f, &root_allocation, &r.ninstructions, &r.instructions, &r.nliterals, &r.literals, &r.nfunctions, &r.functions);
+  if (e) return e;
+
+  e_script_init(&r, nullptr, 0, s);
+
+  fclose(f);
+
+  return 0;
+}
+
+static inline e_var*
+get_struct_member(const e_var* v, const char* member)
+{ return e_struct_get_member(e_hash_fnv(member, strlen(member)), E_VAR_AS_STRUCT(v)); }
+
 int
 main(void)
 {
+  if (e_refdobj_pool_init(8, &ge_pool)) return -1;
+
+  e_script test = { 0 };
+  if (load_script("build/test.b", &test)) return -1;
+
+  e_var obj = e_script_call(&test, "init", nullptr, 0);
+  eb_println(&obj, 1);
+
   umodsys sys;
   if (umodsys_init(&sys)) return -1;
 
@@ -89,14 +129,20 @@ main(void)
 
     ucamera_rebuild(&cam);
 
+    e_var dt = e_var_from_float(0.016);
+
+    e_var n = e_script_call(&test, "update", (e_var[]){ obj, dt }, 2);
+    if (n.type != E_VARTYPE_NULL) obj = n;
+
+    eb_println(&n, 1);
+
     const float PI = 3.1415926535F;
 
-    float r = 2.F + sinf(0.3F * (float)utime_hwclock_nsecs() * 1e-8F);
-    float g = 2.F + cosf(0.3F * (float)utime_hwclock_nsecs() * 1e-8F);
-    float b = 2.F + tanf(0.3F * (float)utime_hwclock_nsecs() * 1e-8F);
+    e_vec3 position = get_struct_member(&obj, "position")->val.vec3;
+
     ugl_command cmd = {
       .type       = UGL_COMMAND_DRAW_RECT,
-      .value.rect = { .rect = { .x = 0.0F, .y = 0.0F, .w = r, .h = g }, .color = { .r = r, .g = g, b, 1.0F }, .layer = 0, },
+      .value.rect = { .rect = { .x = (float)position.x, .y = (float)position.y, .w = 0.5F, .h = 0.5F }, .color = { .r = 0.F, .g = 1.0F, 1.0F, 1.0F }, .layer = 0, },
     };
     ugl_cmd_push(ugl, &cmd);
 
