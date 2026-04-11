@@ -7,8 +7,10 @@
 #include "../fralloc.h"
 #include "../glmodule.h"
 #include "../input.h"
+#include "../singleton.h"
 #include "../time.h"
 #include "../winmodule.h"
+#include "ESL/input.h"
 
 #include <SDL3/SDL_events.h>
 #include <SDL3/SDL_opengl.h>
@@ -31,13 +33,6 @@ process_events(const umod_msg* msg, void* user_data)
     case U_WIN_MSG_KEY_DOWN:
       printf("Key %u down\n", pload->key.scancode);
       if (pload->key.scancode == SDL_SCANCODE_ESCAPE) run = false;
-
-      vec2 move = { 0 };
-      if (pload->key.scancode == SDL_SCANCODE_S) { move[1] += -0.5F; }
-      if (pload->key.scancode == SDL_SCANCODE_W) { move[1] += 0.5F; }
-      if (pload->key.scancode == SDL_SCANCODE_A) { move[0] += -0.5F; }
-      if (pload->key.scancode == SDL_SCANCODE_D) { move[0] += 0.5F; }
-      ucamera_move(cam, move);
       break;
     case U_WIN_MSG_KEY_UP: printf("Key %u up\n", pload->key.scancode); break;
     // case U_WIN_MSG_MOUSE_MOVE: printf("Mouse moved: %f %f\n", pload->mouse_move.x, pload->mouse_move.y); break;
@@ -53,7 +48,7 @@ process_events(const umod_msg* msg, void* user_data)
 }
 
 static inline int
-load_script(const char* path, e_script* s)
+load_script(const char* path, const e_builtin_func* external_funcs, u32 external_nfuncs, const e_builtin_var* extern_vars, u32 nextern_vars, e_script* s)
 {
   FILE* f = fopen(path, "rb");
   if (!f) {
@@ -68,7 +63,7 @@ load_script(const char* path, e_script* s)
   int                  e = e_file_load(f, &root_allocation, &r.ninstructions, &r.instructions, &r.nliterals, &r.literals, &r.nfunctions, &r.functions);
   if (e) return e;
 
-  e = e_script_init(&r, nullptr, 0, s);
+  e = e_script_init(&r, external_funcs, external_nfuncs, extern_vars, nextern_vars, s);
   if (e) {
     fclose(f);
     return e;
@@ -89,13 +84,15 @@ main(void)
   if (e_refdobj_pool_init(8, &ge_pool)) return -1;
 
   e_script test = { 0 };
-  if (load_script("build/test.b", &test)) return -1;
+  if (load_script("build/test.b", uesl_input_functions, E_ARRLEN(uesl_input_functions), uesl_input_vars, E_ARRLEN(uesl_input_vars), &test)) return -1;
 
   e_var obj = e_script_call(&test, "init", nullptr, 0);
   eb_println(&obj, 1);
 
   umodsys sys;
   if (umodsys_init(&sys)) return -1;
+
+  g_umodsys_set(&sys);
 
   uwin_init_info winit_info = {
     .width  = 800,

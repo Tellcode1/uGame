@@ -37,12 +37,12 @@ int  uinput_init(umod* mod, void* user_data);
 void uinput_tick(umod* mod);
 void uinput_free(umod* mod);
 
-static inline void uinput_mouse_position(uinput_module* input, vec2 out_position);
-static inline bool uinput_mouse_pressed(uinput_module* input, umouse_button button);
+void uinput_mouse_position(uinput_module* input, vec2 out_position);
+bool uinput_mouse_pressed(uinput_module* input, umouse_button button);
 
-static inline bool uinput_key_pressed(uinput_module* input, SDL_Scancode key);
-static inline bool uinput_key_held(uinput_module* input, SDL_Scancode key);
-static inline bool uinput_key_released(uinput_module* input, SDL_Scancode key);
+bool uinput_key_pressed(uinput_module* input, SDL_Scancode key);
+bool uinput_key_held(uinput_module* input, SDL_Scancode key);
+bool uinput_key_released(uinput_module* input, SDL_Scancode key);
 
 // static inline umod_desc
 // uinput_module_info(void)

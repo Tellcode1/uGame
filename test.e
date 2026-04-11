@@ -28,8 +28,25 @@ fn update(obj, dt) {
   const speed = 1.5;
 
   // obj.position.x = obj.position[0] + speed * dt;
-  obj.position.x = 3 * math::sin(obj.accum);
-  obj.accum += dt * speed;
+  // obj.position.x = 3 * math::sin(obj.accum);
+  // obj.accum += dt * speed;
+
+  if (uinput::is_key_held(uinput::scancode::W))
+  {
+    obj.position.y += dt * speed;
+  }
+  if (uinput::is_key_held(uinput::scancode::S))
+  {
+    obj.position.y -= dt * speed;
+  }
+  if (uinput::is_key_held(uinput::scancode::A))
+  {
+    obj.position.x -= dt * speed;
+  }
+  if (uinput::is_key_held(uinput::scancode::D))
+  {
+    obj.position.x += dt * speed;
+  }
 
   // io::println(io::STDOUT, "New position: ", obj.position.x + 10 * dt);
 

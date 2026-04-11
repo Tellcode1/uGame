@@ -1,10 +1,10 @@
 #ifndef UGAME_ESL_INTERFACE_H
 #define UGAME_ESL_INTERFACE_H
 
-#include "../../ESL/exec.h"
+#include "../../ESL/bstructs.h"
+#include "../../ESL/bvar.h"
 
-typedef struct uesl_runtime_builder
-{
+typedef struct uesl_runtime_builder {
   e_builtin_struct* structs;
   u32               structs_count;
   u32               structs_capacity;

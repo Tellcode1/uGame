@@ -3,7 +3,7 @@ CFLAGS=-g -DDEBUG
 LDFLAGS=-g
 LIBS=-lm -lSDL3 -lGL
 GLSRC=src/GL/glmod.c src/GL/gldraw.c src/GL/glutils.c src/GL/glad.c
-SRC=src/test.c src/msys.c src/mmsg.c src/time.c src/ufr.c src/winm.c src/camera.c src/ESL/uesl.c src/input.c $(GLSRC)
+SRC=src/test.c src/msys.c src/mmsg.c src/time.c src/ufr.c src/winm.c src/camera.c src/ESL/uesl.c src/ESL/input.c src/input.c $(GLSRC)
 OBJ=$(patsubst src/%.c,build/%.o,$(SRC))
 
 GLM_HEADER=glmpch.h

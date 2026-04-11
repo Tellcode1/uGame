@@ -2,6 +2,9 @@
 #define UESL_INPUT_H
 
 #include "../../ESL/bfunc.h"
+#include "../../ESL/bvar.h"
+
+#include <SDL3/SDL_scancode.h>
 
 e_var uesl_input_mouse_position(e_var* args, u32 nargs);
 e_var uesl_input_mouse_delta(e_var* args, u32 nargs);
@@ -65,6 +68,14 @@ static const e_builtin_func uesl_input_functions[] = {
       1,
       uesl_input_key_held,
   },
+};
+
+static const e_builtin_var uesl_input_vars[] = {
+  { .name = "uinput::scancode::W", .type = E_VARTYPE_INT, .value = { .i = SDL_SCANCODE_W } },
+  { .name = "uinput::scancode::A", .type = E_VARTYPE_INT, .value = { .i = SDL_SCANCODE_A } },
+  { .name = "uinput::scancode::S", .type = E_VARTYPE_INT, .value = { .i = SDL_SCANCODE_S } },
+  { .name = "uinput::scancode::D", .type = E_VARTYPE_INT, .value = { .i = SDL_SCANCODE_D } },
+
 };
 
 #endif // UESL_INPUT_H
