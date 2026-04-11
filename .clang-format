@@ -1,11 +1,11 @@
-BasedOnStyle: gnu
+BasedOnStyle: GNU
 IndentWidth: 2
 TabWidth: 2
 UseTab: Never
 ColumnLimit: 175
 AllowAllParametersOfDeclarationOnNextLine: true
 AlignAfterOpenBracket: AlwaysBreak
-AlignConsecutiveAssignments: Consecutive
+AlignConsecutiveAssignments: AcrossEmptyLines
 AlignConsecutiveDeclarations: Consecutive
 AlignOperands: DontAlign
 AlignTrailingComments: true
@@ -29,12 +29,5 @@ BreakBeforeTernaryOperators: true
 BinPackArguments: false
 BinPackParameters: false
 BreakBeforeBinaryOperators: NonAssignment
-BreakBeforeBraces: Allman
-BraceWrapping:
-  AfterStruct: true
-  AfterUnion: true
-  BeforeElse: true
-  BeforeCatch: true
-  BeforeLambdaBody: true
-  AfterEnum: true
+BreakBeforeBraces: Linux
 BreakConstructorInitializers: BeforeComma

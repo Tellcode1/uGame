@@ -2,7 +2,7 @@
 #define U_WINDOW_MODULE_H
 
 /**
- * In uGame, the window is responsible for both the windowing and input msgs.
+ * In uGame, the window is responsible for both the windowing and (low level) input msgs.
  * winmodule->module_data = SDL_Window *
  */
 
@@ -14,14 +14,15 @@
 
 /*
  * The sender mask of the messages.
- * Your receiver mask must contain this bit to receive messages from the inputs module.
+ * Your receiver mask must contain this bit to receive messages from the inputs/window module.
  */
 #define U_WIN_MESSAGE_MASK (0x2)
 
 typedef enum uwin_msg_type
 {
   U_WIN_MSG_EXIT,               // Called to signal user to free window module and free (User is trying to free window)
-  U_WIN_MSG_KEY_DOWN,           // Key pressed / repeat.
+  U_WIN_MSG_KEY_DOWN,           // Key pressed.
+  U_WIN_MSG_KEY_HELD,           // Key repeat
   U_WIN_MSG_KEY_UP,             // Key unpressed.
   U_WIN_MSG_MOUSE_MOVE,         // Mouse moved.
   U_WIN_MSG_MOUSE_CLICK,        // Mouse clicked.
@@ -32,14 +33,18 @@ typedef enum uwin_msg_type
 
 typedef struct uwin_msg_key
 {
-  u32 scancode;
+  SDL_Scancode scancode;
 } uwin_msg_key;
 typedef struct uwin_msg_mouse_move
 {
+  // Window space
+  // <0...width, 0...height>
   float x, y;
 } uwin_msg_mouse_move;
 typedef struct uwin_msg_mouse_btn
 {
+  // Window space
+  // <0...width, 0...height>
   float x, y;
   u32   button;
 } uwin_msg_mouse_btn;

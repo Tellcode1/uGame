@@ -81,10 +81,9 @@ extern "C"
 
   typedef struct umod_msg
   {
-    // Values for both of these are found in the module struct
     // DO NOT ADDRESS RANDOM MODULES!!!!
-    // For an msg to be passed to a module (and consumed),
-    // The msg.sender_mask & module.receiver_mask must not euual 0
+    // For n msg to be passed to a module (and consumed),
+    // The msg.sender_mask & module.receiver_mask must not equal 0
     // I.E. The sender_mask specifies which groups (bits) can send msgs to a module
     // And the receiver mask specifies which groups (bits) it can receive from.
     u32 sender_mask;

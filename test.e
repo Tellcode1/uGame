@@ -3,13 +3,14 @@ struct Object {
   let position;
   let scale;
   let rotation;
+  let accum;
 };
 
   //  Called once to initialize the object
   //  The engine doesn't have anything else to do with
   //  the object after this, only passes it to update.
 fn init() {
-  let obj = Object("Test", vec3(0.0, 0.0, 0.0), vec3(0.0, 0.0, 0.0), vec3(0.0, 0.0, 0.0));
+  let obj = Object("Test", vec3(0.0, 0.0, 0.0), vec3(0.0, 0.0, 0.0), vec3(0.0, 0.0, 0.0), 0.0);
   return obj;
 }
 
@@ -22,10 +23,13 @@ fn init() {
   // 
   //
 fn update(obj, dt) {
-  if (obj.name != "Test") { io::println(io::STDERR, "null object passed!"); return null; }
+  if (obj.name != "Test" || obj == null) { io::println(io::STDERR, "null object passed!"); return null; }
   
-  const speed = 0.5;
-  obj.position.x = obj.position[0] + speed * dt;
+  const speed = 1.5;
+
+  // obj.position.x = obj.position[0] + speed * dt;
+  obj.position.x = 3 * math::sin(obj.accum);
+  obj.accum += dt * speed;
 
   // io::println(io::STDOUT, "New position: ", obj.position.x + 10 * dt);
 

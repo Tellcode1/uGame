@@ -1,11 +1,12 @@
-#include "../ESL/exec.h"
 #include "../ESL/rwhelp.h"
+#include "../ESL/script.h"
 #include "../ESL/struct.h"
 #include "../ESL/var.h"
 #include "../camera.h"
 #include "../cmdbuf.h"
 #include "../fralloc.h"
 #include "../glmodule.h"
+#include "../input.h"
 #include "../time.h"
 #include "../winmodule.h"
 
@@ -22,18 +23,24 @@ static bool run = true;
 static inline void
 process_events(const umod_msg* msg, void* user_data)
 {
-  ucamera* cam = (ucamera*)user_data;
+  ucamera* cam                  = (ucamera*)user_data;
 
   const uwin_msg_payload* pload = (uwin_msg_payload*)msg->data;
-  switch ((uwin_msg_type)msg->msg_id)
-  {
+  switch ((uwin_msg_type)msg->msg_id) {
     case U_WIN_MSG_EXIT: run = false; break;
     case U_WIN_MSG_KEY_DOWN:
       printf("Key %u down\n", pload->key.scancode);
       if (pload->key.scancode == SDL_SCANCODE_ESCAPE) run = false;
+
+      vec2 move = { 0 };
+      if (pload->key.scancode == SDL_SCANCODE_S) { move[1] += -0.5F; }
+      if (pload->key.scancode == SDL_SCANCODE_W) { move[1] += 0.5F; }
+      if (pload->key.scancode == SDL_SCANCODE_A) { move[0] += -0.5F; }
+      if (pload->key.scancode == SDL_SCANCODE_D) { move[0] += 0.5F; }
+      ucamera_move(cam, move);
       break;
     case U_WIN_MSG_KEY_UP: printf("Key %u up\n", pload->key.scancode); break;
-    case U_WIN_MSG_MOUSE_MOVE: printf("Mouse moved: %f %f\n", pload->mouse_move.x, pload->mouse_move.y); break;
+    // case U_WIN_MSG_MOUSE_MOVE: printf("Mouse moved: %f %f\n", pload->mouse_move.x, pload->mouse_move.y); break;
     case U_WIN_MSG_MOUSE_CLICK: printf("Mouse button %u clicked %f %f\n", pload->mouse_bton.button, pload->mouse_bton.x, pload->mouse_bton.y); break;
     case U_WIN_MSG_MOUSE_DOUBLE_CLICK: printf("Mouse button %u double clicked %f %f\n", pload->mouse_bton.button, pload->mouse_bton.x, pload->mouse_bton.y); break;
     case U_WIN_MSG_WIN_RESIZE: printf("Window resized %ix%i\n", pload->win_resized.width, pload->win_resized.height); break;
@@ -41,6 +48,7 @@ process_events(const umod_msg* msg, void* user_data)
       printf("Scroll %f %f\n", pload->scroll.x, pload->scroll.y);
       ucamera_set_zoom(cam, cam->zoom + pload->scroll.y * 0.2F);
       break;
+    default: break;
   }
 }
 
@@ -48,20 +56,23 @@ static inline int
 load_script(const char* path, e_script* s)
 {
   FILE* f = fopen(path, "rb");
-  if (!f)
-  {
+  if (!f) {
     puts(path);
     perror("Failed to open file");
     return -1;
   }
 
-  void* root_allocation = nullptr;
+  void* root_allocation  = nullptr;
 
   e_compilation_result r = { 0 };
   int                  e = e_file_load(f, &root_allocation, &r.ninstructions, &r.instructions, &r.nliterals, &r.literals, &r.nfunctions, &r.functions);
   if (e) return e;
 
-  e_script_init(&r, nullptr, 0, s);
+  e = e_script_init(&r, nullptr, 0, s);
+  if (e) {
+    fclose(f);
+    return e;
+  }
 
   fclose(f);
 
@@ -95,8 +106,19 @@ main(void)
 
   umod_desc desc = uwin_module_info();
 
-  int uwin_id = -1;
-  if ((uwin_id = umod_init(&desc, &winit_info, &sys)) < 0) return -1;
+  int uwin_id    = umod_init(&desc, &winit_info, &sys);
+  if (uwin_id < 0) return -1;
+
+  umod_desc input = {
+    .name         = "uInput",
+    .send_mask    = U_INPUT_MESSAGE_MASK,
+    .receive_mask = U_WIN_MESSAGE_MASK,
+    .init         = uinput_init,
+    .free         = uinput_free,
+    .tick         = uinput_tick,
+  };
+  int uinput_id = umod_init(&input, nullptr, &sys);
+  if (uinput_id < 0) return -1;
 
   ugl_init_info glinit_info = {
     .major_version    = 3,
@@ -105,7 +127,7 @@ main(void)
     .double_buffering = 1,
   };
 
-  desc = ugl_module_desc();
+  desc       = ugl_module_desc();
 
   int ugl_id = -1;
   if ((ugl_id = umod_init(&desc, &glinit_info, &sys)) < 0) return -1;
@@ -120,8 +142,14 @@ main(void)
   ugl_set_active_camera((ugl_module*)umodsys_get_module(&sys, ugl_id)->module_data, &cam);
 
   float angle = 0.0F;
-  while (run)
-  {
+
+  u64    prev = utime_hwclock_nsecs();
+  double dt   = 0.0;
+  while (run) {
+    u64 now         = utime_hwclock_nsecs();
+    dt              = UTIME_NSECS_TO_SECS(now - prev);
+    prev            = now;
+
     ugl_module* ugl = (ugl_module*)umodsys_get_module(&sys, ugl_id)->module_data;
 
     umodsys_tick(&sys);
@@ -129,16 +157,14 @@ main(void)
 
     ucamera_rebuild(&cam);
 
-    e_var dt = e_var_from_float(0.016);
-
-    e_var n = e_script_call(&test, "update", (e_var[]){ obj, dt }, 2);
+    e_var n = e_script_call(&test, "update", (e_var[]){ obj, e_var_from_float(dt) }, 2);
     if (n.type != E_VARTYPE_NULL) obj = n;
 
-    eb_println(&n, 1);
+    const float PI  = 3.1415926535F;
 
-    const float PI = 3.1415926535F;
-
-    e_vec3 position = get_struct_member(&obj, "position")->val.vec3;
+    e_vec3 position = { 0 };
+    e_var* access   = get_struct_member(&obj, "position");
+    if (access) position = access->val.vec3;
 
     ugl_command cmd = {
       .type       = UGL_COMMAND_DRAW_RECT,
@@ -149,8 +175,8 @@ main(void)
     angle += 0.008F;
     if (angle >= 2.0f * PI) { angle -= 2.0f * PI; }
 
-    float x = cosf(angle) * 3.F;
-    float y = sinf(angle) * 3.F;
+    float x               = cosf(angle) * 3.F;
+    float y               = sinf(angle) * 3.F;
 
     cmd.value.rect.color  = (ucolor){ 1, 1, 1, 1 };
     cmd.value.rect.rect.w = 1;

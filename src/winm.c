@@ -38,14 +38,13 @@ uwin_free(umod* mod)
 void
 uwin_tick(umod* mod)
 {
-  umod_msg msg;
-  msg.sender_mask = U_WIN_MESSAGE_MASK;
-
-  uwin_msg_payload* data = (uwin_msg_payload*)msg.data;
-
   SDL_Event ev;
   while (SDL_PollEvent(&ev))
   {
+    umod_msg msg;
+    msg.sender_mask        = U_WIN_MESSAGE_MASK;
+    uwin_msg_payload* data = (uwin_msg_payload*)msg.data;
+
     if (ev.type == SDL_EVENT_QUIT)
     {
       msg.msg_id = U_WIN_MSG_EXIT;

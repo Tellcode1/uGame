@@ -67,14 +67,8 @@ getns(void)
   QueryPerformanceCounter(&now);
   return (uint64_t)((1.0e9 * now.QuadPart) / win_frequency.QuadPart);
 #else
-  static struct timespec linux_rate;
-  uint64_t               now;
-  struct timespec        spec = { 0 };
-  if (ns_inited == 0)
-  {
-    clock_getres(NS_CLOCK_ID, &linux_rate);
-    ns_inited = 1;
-  }
+  uint64_t        now;
+  struct timespec spec = { 0 };
   clock_gettime(NS_CLOCK_ID, &spec);
   now = spec.tv_sec * (uint64_t)1.0e9 + spec.tv_nsec;
   return now;
